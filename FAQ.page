@@ -1,0 +1,179 @@
+**F**requenting **A**lphabetic **Q**uestions 
+
+Helping you and myself
+
+# A
+## Adaptivity 
+
+Basilisk uses quadtrees to allow efficient adaptive grid refinement. The first thing we need to do is to remove the line setting the grid to Cartesian i.e.
+
+~~~c
+/** #include "grid/cartesian.h" */
+~~~
+
+and to adapt the resolution according to the (wavelet-estimated) discretisation error of field h at each timestep (i++) we add
+
+~~~c
+event adapt (i++) {
+  adapt_wavelet ({h}, (double []){4e-3}, maxlevel = 8);
+}
+~~~
+
+We have just told Basilisk to adapt the resolution according to the (wavelet-estimated) discretisation error of field h. This adaptation is done at each timestep (i++). Whenever the discretisation error is larger than $4. \ 10^{-4}$
+the mesh is refined, down to a maximum of 8 quad tree levels in this case.
+
+
+## Axisymmetric
+
+For problems with a symmetry of revolution around the z-axis of a cylindrical coordinate system. 
+
+- The longitudinal coordinate (z-axis) is x and the radial coordinate (r-axis) is y. 
+- Note that y (and so Y0) cannot be negative.
+
+Use
+
+~~~c
+# include "axi.h"
+~~~
+
+# C
+## Compilation
+
+Useful flags
+
+- -fopenmp   (use openmp)
+- -g         (use debugger)
+- -lm        (call math library) 
+- -Wall       (Warning all)
+
+
+# D
+## Density (and viscosity) variable
+
+The density and viscosity are defined here using the arithmetic average.
+
+~~~c
+    #define ρ(f) ((f)*rho1 + (1. - (f))*rho2)
+    #define μ(f)  ((f)*mu1 + (1. - (f))*mu2)
+
+    event properties (i++) {
+     foreach_face() {
+      double fm = (f[] + f[-1,0])/2.;
+      alphav.x[] = 1./ρ(fm);
+      muv.x[] = μ(fm);
+      }
+     foreach()
+     alphacv[] = 1./ρ(f[]);
+     }
+~~~
+
+# G
+## Gravity
+
+Adding gravity force in the *y* direction
+
+~~~C
+event acceleration (i++) {
+  face vector av = a;
+  foreach_face(x)
+    av.x[] -= 0.98;
+}
+~~~
+
+#I
+## Initialization
+
+### Face vector
+In some cases, it can be necessary to apply different operations to each component of a **face vector field**. 
+For example let’s assume we need to initialise a face vector field with the components (y,x). 
+This could be done using
+
+~~~C
+face vector u[];
+...
+foreach_face(x)
+  u.x[] = y;
+foreach_face(y)
+  u.y[] = x;
+~~~
+
+Note that the coordinates x and y correspond to the center of the face.
+
+### Volume fraction
+
+To initialize the volume fraction 
+
+~~~C
+  vertex scalar phi[];
+    foreach_vertex()
+        phi[] = sq(DIAMETER/2) - sq(x) - sq(y);
+   fractions (phi, c);
+~~~
+
+# M
+## Macros
+
+Some macros functions are defined in Basilisk (see src/common.h for details)
+
+~~~C
+@define max(a,b) ((a) > (b) ? (a) : (b))
+@define min(a,b) ((a) < (b) ? (a) : (b))
+@define sq(x) ((x)*(x))
+@define cube(x) ((x)*(x)*(x))
+@define sign(x) ((x) > 0 ? 1 : -1)
+@define noise() (1. - 2.*rand()/(double)RAND_MAX)
+@define clamp(x,a,b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
+@define swap(type,a,b) { type tmp = a; a = b; b = tmp; }
+~~~
+
+# O
+## Origin
+
+By default Basilisk place the origin (0,0) at the bottom of the left corner in 2D. To move it
+at the cent of the box we can set
+
+~~~C
+ X0 = -L0/2;
+ Y0 = -L0/2;
+~~~
+
+or the `origin()`function
+
+~~~C
+ origin (-L0/2, -L0/2.);
+~~~
+
+L0 being the box size.
+
+# R
+## Random numbers
+
+The `noise()` function returns random numbers between -1 and 1) example for setting 0 and 1 in a circle
+of center (0,0) and of radius 0.1
+
+~~~C
+foreach() {
+    a[] = (x*x + y*y < sq(0.2))*(noise() > 0.);
+  }
+  boundary({a});
+~~~
+
+# T
+## Tension de surface
+
+The surface tension $\sigma$ and interface curvature $\kappa$ are associated to each VOF tracer. 
+
+The interface is represented by the volume fraction field $c$ by
+
+~~~C
+#include "vof.h"
+#include "tension.h"
+...
+scalar c[], * interfaces = {c};
+~~~
+
+and setting by the way  $\sigma = 1.$ doing
+
+~~~C
+c.σ = 1.;
+~~~
