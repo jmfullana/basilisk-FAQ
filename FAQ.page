@@ -135,8 +135,11 @@ that it's automatically accessible through PATH. I will fix this.
 In the meantime just do
 
 % cd $BASILISK
+
 % ln -s kdt/kdtquery
+
 % which kdtquery
+
 /home/popinet/basilisk/src/kdtquery
 
 
