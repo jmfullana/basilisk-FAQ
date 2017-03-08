@@ -67,6 +67,22 @@ The density and viscosity are defined here using the arithmetic average.
      }
 ~~~
 
+## Dimensions
+
+By default Basilisk runs on a quadtree grid. This also automatically sets a two-dimensional spatial domain.
+
+For the example; 3 Dimensions (octree grid) are defined by an option during the generation of the source file:
+
+qcc -source -grid=octree -D_MPI=1 atomisation.c
+
+So compile with this option, or add:
+
+~~~c
+#include "grid/octree.h"
+~~~
+
+at the top of your simulation file. 
+
 # G
 ## Gravity
 
@@ -110,7 +126,30 @@ To initialize the volume fraction
    fractions (phi, c);
 ~~~
 
+# K
+
+## kdtquery
+
+kdtquery is in the Basilisk release. There is just a missing symbolic link so
+that it's automatically accessible through PATH. I will fix this.
+In the meantime just do
+
+% cd $BASILISK
+% ln -s kdt/kdtquery
+% which kdtquery
+/home/popinet/basilisk/src/kdtquery
+
+
 # M
+
+## Mask
+
+mask() **only** works on trees dont use
+
+~~~C
+#include"grid/multigrid.h"          
+~~~
+
 ## Macros
 
 Some macros functions are defined in Basilisk (see src/common.h for details)
@@ -125,6 +164,14 @@ Some macros functions are defined in Basilisk (see src/common.h for details)
 @define clamp(x,a,b) ((x) < (a) ? (a) : (x) > (b) ? (b) : (x))
 @define swap(type,a,b) { type tmp = a; a = b; b = tmp; }
 ~~~
+
+If you have problems with some macros please read K&R ...
+to understand up more on how to use C preprocessor directives (i.e. all the keywords starting with #) correctly.
+
+A few tips:
+
+- always enclose expressions within brackets
+- be careful to add dots to floating point constants
 
 # O
 ## Origin
